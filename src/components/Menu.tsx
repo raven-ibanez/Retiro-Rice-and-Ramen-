@@ -95,8 +95,7 @@ const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuan
       <div className="text-center mb-12">
         <h2 className="text-4xl font-noto font-semibold text-black mb-4">Our Menu</h2>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Discover our selection of authentic dim sum, flavorful noodles, and traditional Asian dishes, 
-          all prepared with fresh ingredients and authentic techniques.
+        Experience the perfect harmony of rich, savory ramen and comforting rice dishes, made with care and the freshest ingredients.
         </p>
       </div>
 

@@ -4,16 +4,16 @@ export default {
   theme: {
     extend: {
       colors: {
-        ramen: {
-          red: '#D7263D',
-          dark: '#0B0A0A',
-          charcoal: '#111113',
-          cream: '#FFF3E0',
-          beige: '#F7E7CE',
-          gold: '#E0A106',
-          sesame: '#D1C7B7',
-          seaweed: '#1F2937',
-          kimchi: '#B81D24'
+        retiro: {
+          red: '#DC2626', // Primary red matching the logo
+          dark: '#000000', // Pure black from logo
+          charcoal: '#1F2937', // Dark gray for text
+          cream: '#FFFFFF', // Pure white from logo
+          beige: '#F9FAFB', // Light gray for backgrounds
+          gold: '#F59E0B', // Accent gold
+          sesame: '#F3F4F6', // Light gray for subtle elements
+          seaweed: '#111827', // Very dark for contrast
+          kimchi: '#B91C1C' // Darker red for hover states
         }
       },
       fontFamily: {

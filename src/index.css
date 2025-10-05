@@ -2,14 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ramen Yard Custom Styles */
-/* Minimal helpers for ramen palette when needed outside tailwind tokens */
-.bg-ramen-cream { background-color: #FFF3E0; }
-.bg-ramen-beige { background-color: #F7E7CE; }
-.text-ramen-red { color: #D7263D; }
-.text-ramen-dark { color: #0B0A0A; }
-.border-ramen-sesame { border-color: #D1C7B7; }
-.ring-ramen-gold { --tw-ring-color: #E0A106; }
+/* Retiro Rice & Ramen Custom Styles */
+/* Minimal helpers for retiro palette when needed outside tailwind tokens */
+.bg-retiro-cream { background-color: #FFFFFF; }
+.bg-retiro-beige { background-color: #F9FAFB; }
+.text-retiro-red { color: #DC2626; }
+.text-retiro-dark { color: #000000; }
+.border-retiro-sesame { border-color: #F3F4F6; }
+.ring-retiro-gold { --tw-ring-color: #F59E0B; }
 
 /* Hide scrollbar for mobile nav */
 .scrollbar-hide {

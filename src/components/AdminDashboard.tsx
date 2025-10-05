@@ -11,7 +11,7 @@ import SiteSettingsManager from './SiteSettingsManager';
 
 const AdminDashboard: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('beracah_admin_auth') === 'true';
+    return localStorage.getItem('retiro_admin_auth') === 'true';
   });
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -232,9 +232,9 @@ const AdminDashboard: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'ClickEats@Admin!2025') {
+    if (password === 'RetiroRiceandRamen@Admin!2025') {
       setIsAuthenticated(true);
-      localStorage.setItem('beracah_admin_auth', 'true');
+      localStorage.setItem('retiro_admin_auth', 'true');
       setLoginError('');
     } else {
       setLoginError('Invalid password');
@@ -243,7 +243,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('beracah_admin_auth');
+    localStorage.removeItem('retiro_admin_auth');
     setPassword('');
     setCurrentView('dashboard');
   };
@@ -478,7 +478,7 @@ const AdminDashboard: React.FC = () => {
                 <h3 className="text-lg font-playfair font-medium text-black">Size Variations</h3>
                 <button
                   onClick={addVariation}
-                  className="flex items-center space-x-2 px-3 py-2 bg-cream-100 text-black rounded-lg hover:bg-cream-200 transition-colors duration-200"
+                  className="flex items-center space-x-2 px-3 py-2 bg-retiro-beige text-black rounded-lg hover:bg-gray-100 transition-colors duration-200"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Add Variation</span>
@@ -517,7 +517,7 @@ const AdminDashboard: React.FC = () => {
                 <h3 className="text-lg font-playfair font-medium text-black">Add-ons</h3>
                 <button
                   onClick={addAddOn}
-                  className="flex items-center space-x-2 px-3 py-2 bg-cream-100 text-black rounded-lg hover:bg-cream-200 transition-colors duration-200"
+                  className="flex items-center space-x-2 px-3 py-2 bg-retiro-beige text-black rounded-lg hover:bg-gray-100 transition-colors duration-200"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Add Add-on</span>
@@ -934,7 +934,7 @@ const AdminDashboard: React.FC = () => {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <Coffee className="h-8 w-8 text-black" />
-              <h1 className="text-2xl font-noto font-semibold text-black">ClickEats Admin</h1>
+              <h1 className="text-2xl font-noto font-semibold text-black">Retiro Rice and Ramen Admin</h1>
             </div>
             <div className="flex items-center space-x-4">
               <a
@@ -983,7 +983,7 @@ const AdminDashboard: React.FC = () => {
 
           <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-cream-500 rounded-lg">
+              <div className="p-2 bg-retiro-red rounded-lg">
                 <Coffee className="h-6 w-6 text-white" />
               </div>
               <div className="ml-4">

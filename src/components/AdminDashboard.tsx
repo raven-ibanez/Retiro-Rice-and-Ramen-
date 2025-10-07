@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Save, X, ArrowLeft, Coffee, TrendingUp, Package, Users, Lock, FolderOpen, CreditCard, Settings, Megaphone } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, ArrowLeft, Coffee, TrendingUp, Package, Users, Lock, FolderOpen, CreditCard, Settings, Megaphone, Crown } from 'lucide-react';
 import { MenuItem, Variation, AddOn } from '../types';
 import { addOnCategories } from '../data/menuData';
 import { useMenu } from '../hooks/useMenu';
@@ -9,6 +9,7 @@ import ImageUpload from './ImageUpload';
 import CategoryManager from './CategoryManager';
 import PaymentMethodManager from './PaymentMethodManager';
 import SiteSettingsManager from './SiteSettingsManager';
+import ExclusiveOffersManager from './ExclusiveOffersManager';
 
 // Promotion Manager Component
 const PromotionManager: React.FC<{
@@ -423,7 +424,7 @@ const AdminDashboard: React.FC = () => {
     togglePromotionStatus,
     updatePromotionSettings
   } = usePromotions();
-  const [currentView, setCurrentView] = useState<'dashboard' | 'items' | 'add' | 'edit' | 'categories' | 'payments' | 'settings' | 'promotions'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'items' | 'add' | 'edit' | 'categories' | 'payments' | 'settings' | 'promotions' | 'exclusive-offers'>('dashboard');
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -1331,6 +1332,29 @@ const AdminDashboard: React.FC = () => {
     );
   }
 
+  // Exclusive Offers View
+  if (currentView === 'exclusive-offers') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900">Exclusive Offers Management</h1>
+            <p className="text-gray-600 mt-2">Manage your premium exclusive offers and carousel settings</p>
+          </div>
+          
+          <ExclusiveOffersManager />
+        </div>
+      </div>
+    );
+  }
+
   // Payment Methods View
   if (currentView === 'payments') {
     return <PaymentMethodManager onBack={() => setCurrentView('dashboard')} />;
@@ -1476,6 +1500,13 @@ const AdminDashboard: React.FC = () => {
               >
                 <Megaphone className="h-5 w-5 text-gray-400" />
                 <span className="font-medium text-gray-900">Manage Promotions</span>
+              </button>
+              <button
+                onClick={() => setCurrentView('exclusive-offers')}
+                className="w-full flex items-center space-x-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors duration-200"
+              >
+                <Crown className="h-5 w-5 text-gray-400" />
+                <span className="font-medium text-gray-900">Manage Exclusive Offers</span>
               </button>
               <button
                 onClick={() => setCurrentView('payments')}

@@ -198,6 +198,53 @@ export type Database = {
           updated_at?: string;
         };
       };
+      exclusive_offers: {
+        Row: {
+          id: string;
+          title: string;
+          subtitle: string | null;
+          description: string | null;
+          price: number;
+          original_price: number;
+          discount_text: string | null;
+          image_url: string | null;
+          badge_text: string | null;
+          available: boolean;
+          display_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          subtitle?: string | null;
+          description?: string | null;
+          price: number;
+          original_price: number;
+          discount_text?: string | null;
+          image_url?: string | null;
+          badge_text?: string | null;
+          available?: boolean;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          subtitle?: string | null;
+          description?: string | null;
+          price?: number;
+          original_price?: number;
+          discount_text?: string | null;
+          image_url?: string | null;
+          badge_text?: string | null;
+          available?: boolean;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 };

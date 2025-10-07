@@ -2,8 +2,244 @@ import React from 'react';
 import { MenuItem, CartItem } from '../types';
 import { useCategories } from '../hooks/useCategories';
 import { usePromotions, Promotion } from '../hooks/usePromotions';
+import { useExclusiveOffers, ExclusiveOffer } from '../hooks/useExclusiveOffers';
+import { useCart } from '../hooks/useCart';
 import MenuItemCard from './MenuItemCard';
 import MobileNav from './MobileNav';
+import { Star, Crown, Zap } from 'lucide-react';
+
+// Exclusive Offers Component
+const ExclusiveOffers: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ onAddToCart }) => {
+  const [currentSlide, setCurrentSlide] = React.useState(0);
+  const [touchStart, setTouchStart] = React.useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = React.useState<number | null>(null);
+
+  const { offers, settings, loading } = useExclusiveOffers();
+
+  // Filter only available offers for display
+  const availableOffers = offers.filter(offer => offer.available);
+
+  // Auto-rotate carousel based on settings
+  React.useEffect(() => {
+    if (!settings.auto_rotate || availableOffers.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % availableOffers.length);
+    }, settings.rotation_speed);
+
+    return () => clearInterval(interval);
+  }, [settings.auto_rotate, settings.rotation_speed, availableOffers.length]);
+
+  // Touch handlers for swipe navigation
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      nextSlide();
+    } else if (isRightSwipe) {
+      prevSlide();
+    }
+  };
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % availableOffers.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + availableOffers.length) % availableOffers.length);
+  };
+
+  const handleAddToCart = (offer: ExclusiveOffer) => {
+    // Convert exclusive offer to cart item format
+    const cartItem: CartItem = {
+      id: offer.id,
+      name: offer.title,
+      description: offer.description || '',
+      basePrice: offer.price,
+      category: 'Exclusive Offers',
+      image: offer.image_url,
+      popular: false,
+      available: offer.available,
+      quantity: 1,
+      totalPrice: offer.price
+    };
+
+    onAddToCart(cartItem);
+  };
+
+  // Don't render if disabled or no offers available
+  if (!settings.enabled || availableOffers.length === 0) {
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-gradient-to-br from-retiro-cream to-retiro-beige py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-retiro-red mx-auto mb-4"></div>
+            <p className="text-retiro-charcoal">Loading exclusive offers...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-retiro-cream to-retiro-beige py-16 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-block bg-retiro-red text-white px-6 py-2 rounded-full mb-4">
+            <span className="text-sm font-bold tracking-wider uppercase">{settings.badge}</span>
+          </div>
+          <div className="flex items-center justify-center mb-4">
+            <Crown className="w-8 h-8 text-retiro-red mr-3" />
+            <h2 className="text-4xl md:text-5xl font-bold text-retiro-dark">
+              {settings.title}
+            </h2>
+            <Crown className="w-8 h-8 text-retiro-red ml-3" />
+          </div>
+          <p className="text-xl text-retiro-charcoal max-w-2xl mx-auto">
+            {settings.subtitle}
+          </p>
+        </div>
+
+        {/* Exclusive Items Carousel */}
+        <div 
+          className="relative overflow-hidden rounded-2xl shadow-2xl"
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        >
+          <div className="relative h-96 bg-white">
+            {availableOffers.map((item, index) => (
+              <div
+                key={item.id}
+                className={`absolute inset-0 transition-opacity duration-500 ${
+                  index === currentSlide ? 'opacity-100' : 'opacity-0'
+                }`}
+              >
+                {/* Background Image */}
+                <img 
+                  src={item.image_url || 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&h=400&fit=crop'}
+                  alt={item.title}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-retiro-dark/70 via-retiro-dark/40 to-transparent"></div>
+                
+                {/* Navigation Arrows */}
+                <button
+                  onClick={prevSlide}
+                  className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 z-30 bg-black/30 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-black/50 transition-all duration-300 border border-white/20"
+                  aria-label="Previous exclusive item"
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                
+                <button
+                  onClick={nextSlide}
+                  className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 z-30 bg-black/30 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-black/50 transition-all duration-300 border border-white/20"
+                  aria-label="Next exclusive item"
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+
+                {/* Content */}
+                <div className="relative z-10 flex items-center h-full px-4 sm:px-16">
+                  <div className="max-w-2xl">
+                    {/* Badge */}
+                    {item.badge_text && (
+                      <div className="inline-block bg-retiro-red text-white px-4 sm:px-6 py-1 sm:py-2 rounded-full mb-4 sm:mb-6">
+                        <span className="text-xs sm:text-sm font-bold tracking-wider uppercase">{item.badge_text}</span>
+                      </div>
+                    )}
+                    
+                    {/* Title */}
+                    <h3 className="text-2xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-4">
+                      {item.title}
+                    </h3>
+                    
+                    {/* Subtitle */}
+                    {item.subtitle && (
+                      <p className="text-sm sm:text-xl text-retiro-cream mb-2 sm:mb-4 font-medium">
+                        {item.subtitle}
+                      </p>
+                    )}
+                    
+                    {/* Description */}
+                    {item.description && (
+                      <p className="text-xs sm:text-lg text-gray-200 mb-6 sm:mb-8 leading-relaxed">
+                        {item.description}
+                      </p>
+                    )}
+                    
+                    {/* Pricing */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6 sm:mb-8">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-2xl sm:text-4xl font-bold text-retiro-cream">₱{item.price.toLocaleString()}</span>
+                        <span className="text-lg sm:text-xl text-gray-300 line-through">₱{item.original_price.toLocaleString()}</span>
+                      </div>
+                      {item.discount_text && (
+                        <div className="bg-retiro-kimchi text-white px-3 py-1 rounded-full text-sm font-bold">
+                          {item.discount_text}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Action Button */}
+                    <button 
+                      onClick={() => handleAddToCart(item)}
+                      className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-sm sm:text-lg transition-all duration-300 bg-retiro-cream text-retiro-red hover:bg-white hover:scale-105 shadow-lg"
+                    >
+                      Order Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Dots Indicator */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
+            {availableOffers.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className={`w-2 h-2 sm:w-3 sm:h-3 rounded-full transition-all duration-300 ${
+                  index === currentSlide 
+                    ? 'bg-retiro-cream scale-125' 
+                    : 'bg-white/50 hover:bg-white/70'
+                }`}
+                aria-label={`Go to exclusive item ${index + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+};
 
 // Promotion Carousel Component
 const PromotionCarousel: React.FC = () => {
@@ -254,6 +490,11 @@ const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuan
         {/* Promotion Carousel Section */}
         <div className="relative mb-16 rounded-2xl overflow-hidden shadow-2xl">
           <PromotionCarousel />
+        </div>
+
+        {/* Exclusive Offers Section */}
+        <div className="mb-16">
+          <ExclusiveOffers onAddToCart={addToCart} />
         </div>
 
         <div className="text-center mb-12">

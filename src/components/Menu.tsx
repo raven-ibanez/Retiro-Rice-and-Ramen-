@@ -13,6 +13,8 @@ const ExclusiveOffers: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
   const [currentSlide, setCurrentSlide] = React.useState(0);
   const [touchStart, setTouchStart] = React.useState<number | null>(null);
   const [touchEnd, setTouchEnd] = React.useState<number | null>(null);
+  const [isAddingToCart, setIsAddingToCart] = React.useState(false);
+  const [showSuccessFeedback, setShowSuccessFeedback] = React.useState(false);
 
   const { offers, settings, loading } = useExclusiveOffers();
 
@@ -64,7 +66,11 @@ const ExclusiveOffers: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
     setCurrentSlide((prev) => (prev - 1 + availableOffers.length) % availableOffers.length);
   };
 
-  const handleAddToCart = (offer: ExclusiveOffer) => {
+  const handleAddToCart = async (offer: ExclusiveOffer) => {
+    setIsAddingToCart(true);
+    // Simulate a brief loading state for better UX
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
     // Convert exclusive offer to cart item format
     const cartItem: CartItem = {
       id: offer.id,
@@ -80,6 +86,10 @@ const ExclusiveOffers: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
     };
 
     onAddToCart(cartItem);
+    setIsAddingToCart(false);
+    setShowSuccessFeedback(true);
+    // Hide success feedback after 2 seconds
+    setTimeout(() => setShowSuccessFeedback(false), 2000);
   };
 
   // Don't render if disabled or no offers available
@@ -209,9 +219,28 @@ const ExclusiveOffers: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
                     {/* Action Button */}
                     <button 
                       onClick={() => handleAddToCart(item)}
-                      className="px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-sm sm:text-lg transition-all duration-300 bg-retiro-cream text-retiro-red hover:bg-white hover:scale-105 shadow-lg"
+                      disabled={isAddingToCart}
+                      className={`px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-sm sm:text-lg transition-all duration-300 shadow-lg transform ${
+                        isAddingToCart 
+                          ? 'bg-gray-400 cursor-not-allowed scale-95' 
+                          : 'bg-retiro-cream text-retiro-red hover:bg-white hover:scale-105'
+                      } ${showSuccessFeedback ? 'bg-green-500 text-white' : ''}`}
                     >
-                      Order Now
+                      {isAddingToCart ? (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+                          <span>Adding...</span>
+                        </div>
+                      ) : showSuccessFeedback ? (
+                        <div className="flex items-center space-x-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span>Added!</span>
+                        </div>
+                      ) : (
+                        'Order Now'
+                      )}
                     </button>
                   </div>
                 </div>

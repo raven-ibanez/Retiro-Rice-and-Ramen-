@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ShoppingCart } from 'lucide-react';
 import { useSiteSettings } from '../hooks/useSiteSettings';
 
@@ -10,6 +10,17 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ cartItemsCount, onCartClick, onMenuClick }) => {
   const { siteSettings, loading } = useSiteSettings();
+  const [cartAnimation, setCartAnimation] = useState(false);
+  const [previousCount, setPreviousCount] = useState(cartItemsCount);
+
+  // Trigger animation when cart count changes
+  useEffect(() => {
+    if (cartItemsCount > previousCount) {
+      setCartAnimation(true);
+      setTimeout(() => setCartAnimation(false), 600);
+    }
+    setPreviousCount(cartItemsCount);
+  }, [cartItemsCount, previousCount]);
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-retiro-sesame shadow-sm">
@@ -43,11 +54,17 @@ const Header: React.FC<HeaderProps> = ({ cartItemsCount, onCartClick, onMenuClic
           <div className="flex items-center space-x-2">
             <button 
               onClick={onCartClick}
-              className="relative p-2 text-gray-700 hover:text-black hover:bg-retiro-cream rounded-full transition-all duration-200"
+              className={`relative p-2 text-gray-700 hover:text-black hover:bg-retiro-cream rounded-full transition-all duration-200 ${
+                cartAnimation ? 'scale-110' : ''
+              }`}
             >
-              <ShoppingCart className="h-6 w-6" />
+              <ShoppingCart className={`h-6 w-6 transition-transform duration-200 ${
+                cartAnimation ? 'scale-110' : ''
+              }`} />
               {cartItemsCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-retiro-red text-white text-xs rounded-full h-5 w-5 flex items-center justify-center animate-bounce-gentle">
+                <span className={`absolute -top-1 -right-1 bg-retiro-red text-white text-xs rounded-full h-5 w-5 flex items-center justify-center transition-all duration-300 ${
+                  cartAnimation ? 'animate-bounce scale-125 bg-green-500' : 'animate-bounce-gentle'
+                }`}>
                   {cartItemsCount}
                 </span>
               )}

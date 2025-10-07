@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Minus, X, ShoppingCart } from 'lucide-react';
+import { Plus, Minus, X, ShoppingCart, Check } from 'lucide-react';
 import { MenuItem, Variation, AddOn } from '../types';
 
 interface MenuItemCardProps {
@@ -20,6 +20,8 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
     item.variations?.[0]
   );
   const [selectedAddOns, setSelectedAddOns] = useState<(AddOn & { quantity: number })[]>([]);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
 
   const calculatePrice = () => {
     // Use effective price (discounted or regular) as base
@@ -33,22 +35,36 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
     return price;
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (item.variations?.length || item.addOns?.length) {
       setShowCustomization(true);
     } else {
+      setIsAddingToCart(true);
+      // Simulate a brief loading state for better UX
+      await new Promise(resolve => setTimeout(resolve, 300));
       onAddToCart(item, 1);
+      setIsAddingToCart(false);
+      setShowSuccessFeedback(true);
+      // Hide success feedback after 2 seconds
+      setTimeout(() => setShowSuccessFeedback(false), 2000);
     }
   };
 
-  const handleCustomizedAddToCart = () => {
+  const handleCustomizedAddToCart = async () => {
     // Convert selectedAddOns back to regular AddOn array for cart
     const addOnsForCart: AddOn[] = selectedAddOns.flatMap(addOn => 
       Array(addOn.quantity).fill({ ...addOn, quantity: undefined })
     );
+    setIsAddingToCart(true);
+    // Simulate a brief loading state for better UX
+    await new Promise(resolve => setTimeout(resolve, 300));
     onAddToCart(item, 1, selectedVariation, addOnsForCart);
     setShowCustomization(false);
     setSelectedAddOns([]);
+    setIsAddingToCart(false);
+    setShowSuccessFeedback(true);
+    // Hide success feedback after 2 seconds
+    setTimeout(() => setShowSuccessFeedback(false), 2000);
   };
 
   const handleIncrement = () => {
@@ -198,22 +214,42 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
               ) : quantity === 0 ? (
                 <button
                   onClick={handleAddToCart}
-                  className="bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-2.5 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 transform hover:scale-105 font-medium text-sm shadow-lg hover:shadow-xl"
+                  disabled={isAddingToCart}
+                  className={`relative overflow-hidden bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-2.5 rounded-xl font-medium text-sm shadow-lg transition-all duration-300 transform ${
+                    isAddingToCart 
+                      ? 'scale-95 cursor-not-allowed' 
+                      : 'hover:from-red-600 hover:to-red-700 hover:scale-105 hover:shadow-xl'
+                  } ${showSuccessFeedback ? 'from-green-500 to-green-600' : ''}`}
                 >
-                  {item.variations?.length || item.addOns?.length ? 'Customize' : 'Add to Cart'}
+                  {isAddingToCart ? (
+                    <div className="flex items-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Adding...</span>
+                    </div>
+                  ) : showSuccessFeedback ? (
+                    <div className="flex items-center space-x-2">
+                      <Check className="w-4 h-4" />
+                      <span>Added!</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center space-x-2">
+                      <ShoppingCart className="w-4 h-4" />
+                      <span>{item.variations?.length || item.addOns?.length ? 'Customize' : 'Add to Cart'}</span>
+                    </div>
+                  )}
                 </button>
               ) : (
-                <div className="flex items-center space-x-2 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-xl p-1 border border-yellow-200">
+                <div className="flex items-center space-x-2 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-xl p-1 border border-yellow-200 animate-pulse">
                   <button
                     onClick={handleDecrement}
-                    className="p-2 hover:bg-yellow-200 rounded-lg transition-colors duration-200 hover:scale-110"
+                    className="p-2 hover:bg-yellow-200 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
                   >
                     <Minus className="h-4 w-4 text-gray-700" />
                   </button>
-                  <span className="font-bold text-gray-900 min-w-[28px] text-center text-sm">{quantity}</span>
+                  <span className="font-bold text-gray-900 min-w-[28px] text-center text-sm animate-bounce">{quantity}</span>
                   <button
                     onClick={handleIncrement}
-                    className="p-2 hover:bg-yellow-200 rounded-lg transition-colors duration-200 hover:scale-110"
+                    className="p-2 hover:bg-yellow-200 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95"
                   >
                     <Plus className="h-4 w-4 text-gray-700" />
                   </button>
@@ -361,10 +397,29 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
 
               <button
                 onClick={handleCustomizedAddToCart}
-                className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white py-4 rounded-xl hover:from-red-600 hover:to-red-700 transition-all duration-200 font-semibold flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+                disabled={isAddingToCart}
+                className={`w-full py-4 rounded-xl font-semibold flex items-center justify-center space-x-2 shadow-lg transition-all duration-300 transform ${
+                  isAddingToCart 
+                    ? 'bg-gray-400 cursor-not-allowed scale-95' 
+                    : 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 hover:shadow-xl hover:scale-105'
+                } ${showSuccessFeedback ? 'from-green-500 to-green-600' : ''} text-white`}
               >
-                <ShoppingCart className="h-5 w-5" />
-                <span>Add to Cart - ₱{calculatePrice().toFixed(2)}</span>
+                {isAddingToCart ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Adding to Cart...</span>
+                  </>
+                ) : showSuccessFeedback ? (
+                  <>
+                    <Check className="h-5 w-5" />
+                    <span>Added to Cart!</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-5 w-5" />
+                    <span>Add to Cart - ₱{calculatePrice().toFixed(2)}</span>
+                  </>
+                )}
               </button>
             </div>
           </div>

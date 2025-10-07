@@ -60,7 +60,7 @@ const PromotionCarousel: React.FC = () => {
   const currentPromotion = promotions[currentSlide];
 
   return (
-    <div className="relative h-96 bg-gradient-to-r from-retiro-red to-retiro-kimchi">
+    <div className="relative h-80 sm:h-96 bg-gradient-to-r from-retiro-red to-retiro-kimchi">
       {/* Background Image */}
       <img 
         src={currentPromotion.image_url}
@@ -69,10 +69,10 @@ const PromotionCarousel: React.FC = () => {
       />
       <div className={`absolute inset-0 bg-gradient-to-r ${currentPromotion.gradient_colors}/80`}></div>
       
-      {/* Navigation Arrows */}
+      {/* Navigation Arrows - Hidden on mobile, shown on larger screens */}
       <button
         onClick={prevSlide}
-        className="absolute left-3 top-1/2 transform -translate-y-1/2 z-30 bg-black/30 backdrop-blur-sm rounded-full p-3 hover:bg-black/50 transition-all duration-300 border border-white/20"
+        className="hidden sm:block absolute left-3 top-1/2 transform -translate-y-1/2 z-30 bg-black/30 backdrop-blur-sm rounded-full p-3 hover:bg-black/50 transition-all duration-300 border border-white/20"
         aria-label="Previous promotion"
       >
         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,7 +82,7 @@ const PromotionCarousel: React.FC = () => {
       
       <button
         onClick={nextSlide}
-        className="absolute right-3 top-1/2 transform -translate-y-1/2 z-30 bg-black/30 backdrop-blur-sm rounded-full p-3 hover:bg-black/50 transition-all duration-300 border border-white/20"
+        className="hidden sm:block absolute right-3 top-1/2 transform -translate-y-1/2 z-30 bg-black/30 backdrop-blur-sm rounded-full p-3 hover:bg-black/50 transition-all duration-300 border border-white/20"
         aria-label="Next promotion"
       >
         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,37 +90,53 @@ const PromotionCarousel: React.FC = () => {
         </svg>
       </button>
       
+      {/* Mobile Navigation Dots */}
+      <div className="sm:hidden absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
+        {promotions.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentSlide(index)}
+            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              index === currentSlide 
+                ? 'bg-white scale-125' 
+                : 'bg-white/50'
+            }`}
+            aria-label={`Go to promotion ${index + 1}`}
+          />
+        ))}
+      </div>
+      
       {/* Content */}
-      <div className="relative z-10 flex items-center justify-center h-full px-16">
+      <div className="relative z-10 flex items-center justify-center h-full px-4 sm:px-16">
         <div className="text-center text-white max-w-4xl mx-auto">
-          <div className="inline-block bg-white/20 backdrop-blur-sm rounded-full px-6 py-2 mb-6 animate-fade-in">
-            <span className="text-sm font-semibold tracking-wider uppercase">{currentPromotion.badge_text}</span>
+          <div className="inline-block bg-white/20 backdrop-blur-sm rounded-full px-4 sm:px-6 py-1 sm:py-2 mb-4 sm:mb-6 animate-fade-in">
+            <span className="text-xs sm:text-sm font-semibold tracking-wider uppercase">{currentPromotion.badge_text}</span>
           </div>
           
-          <h2 className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in">
+          <h2 className="text-2xl sm:text-4xl md:text-6xl font-bold mb-4 sm:mb-6 animate-fade-in">
             <span className="text-retiro-cream">{currentPromotion.title}</span>
           </h2>
           
-          <p className="text-xl md:text-2xl mb-2 opacity-90 font-medium">
+          <p className="text-sm sm:text-xl md:text-2xl mb-2 opacity-90 font-medium px-2">
             {currentPromotion.subtitle}
           </p>
           
-          <p className="text-lg mb-8 opacity-80">
+          <p className="text-xs sm:text-lg mb-6 sm:mb-8 opacity-80 px-2">
             {currentPromotion.description}
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
-              <span className="text-sm opacity-90">Valid until</span>
-              <div className="text-lg font-bold">{currentPromotion.valid_until}</div>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-4 sm:mb-0">
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 sm:px-4 py-1 sm:py-2">
+              <span className="text-xs sm:text-sm opacity-90">Valid until</span>
+              <div className="text-sm sm:text-lg font-bold">{currentPromotion.valid_until}</div>
             </div>
             
-            <button className="bg-retiro-cream text-retiro-red px-8 py-3 rounded-full font-bold text-lg hover:bg-white transition-all duration-300 transform hover:scale-105 shadow-lg">
+            <button className="bg-retiro-cream text-retiro-red px-6 sm:px-8 py-2 sm:py-3 rounded-full font-bold text-sm sm:text-lg hover:bg-white transition-all duration-300 transform hover:scale-105 shadow-lg">
               Order Now
             </button>
           </div>
           
-          <p className="text-sm opacity-75 mt-4">
+          <p className="text-xs sm:text-sm opacity-75 mt-2 sm:mt-4 px-2">
             * Use code: <span className="font-bold">{currentPromotion.promo_code}</span> at checkout
           </p>
         </div>

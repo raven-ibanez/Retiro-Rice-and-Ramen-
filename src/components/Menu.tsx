@@ -1,8 +1,134 @@
 import React from 'react';
 import { MenuItem, CartItem } from '../types';
 import { useCategories } from '../hooks/useCategories';
+import { usePromotions, Promotion } from '../hooks/usePromotions';
 import MenuItemCard from './MenuItemCard';
 import MobileNav from './MobileNav';
+
+// Promotion Carousel Component
+const PromotionCarousel: React.FC = () => {
+  const [currentSlide, setCurrentSlide] = React.useState(0);
+  const { promotions, settings, loading } = usePromotions();
+
+  // Auto-rotate carousel if enabled and has promotions
+  React.useEffect(() => {
+    if (!settings.promotion_auto_rotate || promotions.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % promotions.length);
+    }, settings.promotion_rotation_speed);
+
+    return () => clearInterval(interval);
+  }, [promotions.length, settings.promotion_auto_rotate, settings.promotion_rotation_speed]);
+
+  // Reset current slide when promotions change
+  React.useEffect(() => {
+    setCurrentSlide(0);
+  }, [promotions.length]);
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+  };
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % promotions.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + promotions.length) % promotions.length);
+  };
+
+  // Don't render if no promotions or disabled
+  if (!settings.promotions_enabled || promotions.length === 0) {
+    return null;
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="relative h-96 bg-gradient-to-r from-retiro-red to-retiro-kimchi rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-white text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-lg">Loading promotions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentPromotion = promotions[currentSlide];
+
+  return (
+    <div className="relative h-96 bg-gradient-to-r from-retiro-red to-retiro-kimchi">
+      {/* Background Image */}
+      <img 
+        src={currentPromotion.image_url}
+        alt={currentPromotion.subtitle}
+        className="absolute inset-0 w-full h-full object-cover opacity-30 transition-opacity duration-500"
+      />
+      <div className={`absolute inset-0 bg-gradient-to-r ${currentPromotion.gradient_colors}/80`}></div>
+      
+      {/* Navigation Arrows */}
+      <button
+        onClick={prevSlide}
+        className="absolute left-3 top-1/2 transform -translate-y-1/2 z-30 bg-black/30 backdrop-blur-sm rounded-full p-3 hover:bg-black/50 transition-all duration-300 border border-white/20"
+        aria-label="Previous promotion"
+      >
+        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      
+      <button
+        onClick={nextSlide}
+        className="absolute right-3 top-1/2 transform -translate-y-1/2 z-30 bg-black/30 backdrop-blur-sm rounded-full p-3 hover:bg-black/50 transition-all duration-300 border border-white/20"
+        aria-label="Next promotion"
+      >
+        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+      
+      {/* Content */}
+      <div className="relative z-10 flex items-center justify-center h-full px-16">
+        <div className="text-center text-white max-w-4xl mx-auto">
+          <div className="inline-block bg-white/20 backdrop-blur-sm rounded-full px-6 py-2 mb-6 animate-fade-in">
+            <span className="text-sm font-semibold tracking-wider uppercase">{currentPromotion.badge_text}</span>
+          </div>
+          
+          <h2 className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in">
+            <span className="text-retiro-cream">{currentPromotion.title}</span>
+          </h2>
+          
+          <p className="text-xl md:text-2xl mb-2 opacity-90 font-medium">
+            {currentPromotion.subtitle}
+          </p>
+          
+          <p className="text-lg mb-8 opacity-80">
+            {currentPromotion.description}
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2">
+              <span className="text-sm opacity-90">Valid until</span>
+              <div className="text-lg font-bold">{currentPromotion.valid_until}</div>
+            </div>
+            
+            <button className="bg-retiro-cream text-retiro-red px-8 py-3 rounded-full font-bold text-lg hover:bg-white transition-all duration-300 transform hover:scale-105 shadow-lg">
+              Order Now
+            </button>
+          </div>
+          
+          <p className="text-sm opacity-75 mt-4">
+            * Use code: <span className="font-bold">{currentPromotion.promo_code}</span> at checkout
+          </p>
+        </div>
+      </div>
+
+    </div>
+  );
+};
 
 // Preload images for better performance
 const preloadImages = (items: MenuItem[]) => {
@@ -92,12 +218,17 @@ const Menu: React.FC<MenuProps> = ({ menuItems, addToCart, cartItems, updateQuan
         onCategoryClick={handleCategoryClick}
       />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="text-center mb-12">
-        <h2 className="text-4xl font-noto font-semibold text-black mb-4">Our Menu</h2>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-        Experience the perfect harmony of rich, savory ramen and comforting rice dishes, made with care and the freshest ingredients.
-        </p>
-      </div>
+        {/* Promotion Carousel Section */}
+        <div className="relative mb-16 rounded-2xl overflow-hidden shadow-2xl">
+          <PromotionCarousel />
+        </div>
+
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-noto font-semibold text-black mb-4">Our Menu</h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+          Experience the perfect harmony of rich, savory ramen and comforting rice dishes, made with care and the freshest ingredients.
+          </p>
+        </div>
 
       {categories.map((category) => {
         const categoryItems = menuItems.filter(item => item.category === category.id);

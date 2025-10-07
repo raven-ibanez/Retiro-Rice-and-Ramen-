@@ -1,13 +1,409 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Save, X, ArrowLeft, Coffee, TrendingUp, Package, Users, Lock, FolderOpen, CreditCard, Settings } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, ArrowLeft, Coffee, TrendingUp, Package, Users, Lock, FolderOpen, CreditCard, Settings, Megaphone } from 'lucide-react';
 import { MenuItem, Variation, AddOn } from '../types';
 import { addOnCategories } from '../data/menuData';
 import { useMenu } from '../hooks/useMenu';
 import { useCategories, Category } from '../hooks/useCategories';
+import { usePromotions, Promotion } from '../hooks/usePromotions';
 import ImageUpload from './ImageUpload';
 import CategoryManager from './CategoryManager';
 import PaymentMethodManager from './PaymentMethodManager';
 import SiteSettingsManager from './SiteSettingsManager';
+
+// Promotion Manager Component
+const PromotionManager: React.FC<{
+  promotions: Promotion[];
+  settings: any;
+  loading: boolean;
+  onCreatePromotion: (promotion: Omit<Promotion, 'id' | 'created_at' | 'updated_at'>) => Promise<any>;
+  onUpdatePromotion: (id: string, updates: Partial<Promotion>) => Promise<any>;
+  onDeletePromotion: (id: string) => Promise<any>;
+  onToggleStatus: (id: string) => Promise<any>;
+  onUpdateSettings: (settings: any) => Promise<any>;
+}> = ({ promotions, settings, loading, onCreatePromotion, onUpdatePromotion, onDeletePromotion, onToggleStatus, onUpdateSettings }) => {
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
+  const [promotionForm, setPromotionForm] = useState<Partial<Promotion>>({
+    title: '',
+    subtitle: '',
+    description: '',
+    image_url: '',
+    gradient_colors: 'from-retiro-red to-retiro-kimchi',
+    badge_text: '',
+    promo_code: '',
+    valid_until: '',
+    active: true,
+    sort_order: 0
+  });
+  const [settingsForm, setSettingsForm] = useState(settings);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    
+    try {
+      if (editingPromotion) {
+        await onUpdatePromotion(editingPromotion.id, promotionForm);
+        setEditingPromotion(null);
+      } else {
+        await onCreatePromotion(promotionForm as Omit<Promotion, 'id' | 'created_at' | 'updated_at'>);
+      }
+      
+      setPromotionForm({
+        title: '',
+        subtitle: '',
+        description: '',
+        image_url: '',
+        gradient_colors: 'from-retiro-red to-retiro-kimchi',
+        badge_text: '',
+        promo_code: '',
+        valid_until: '',
+        active: true,
+        sort_order: 0
+      });
+      setIsAdding(false);
+    } catch (error) {
+      console.error('Error saving promotion:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleSettingsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    
+    try {
+      await onUpdateSettings(settingsForm);
+    } catch (error) {
+      console.error('Error updating settings:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleEdit = (promotion: Promotion) => {
+    setEditingPromotion(promotion);
+    setPromotionForm(promotion);
+    setIsAdding(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (window.confirm('Are you sure you want to delete this promotion?')) {
+      try {
+        await onDeletePromotion(id);
+      } catch (error) {
+        console.error('Error deleting promotion:', error);
+      }
+    }
+  };
+
+  const handleToggleStatus = async (id: string) => {
+    try {
+      await onToggleStatus(id);
+    } catch (error) {
+      console.error('Error toggling promotion status:', error);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Settings Section */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <h3 className="text-xl font-semibold mb-4 flex items-center">
+          <Settings className="w-5 h-5 mr-2" />
+          Promotion Settings
+        </h3>
+        
+        <form onSubmit={handleSettingsSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              id="promotions_enabled"
+              checked={settingsForm.promotions_enabled}
+              onChange={(e) => setSettingsForm(prev => ({ ...prev, promotions_enabled: e.target.checked }))}
+              className="rounded"
+            />
+            <label htmlFor="promotions_enabled" className="text-sm font-medium">Enable Promotions</label>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            <input
+              type="checkbox"
+              id="promotion_auto_rotate"
+              checked={settingsForm.promotion_auto_rotate}
+              onChange={(e) => setSettingsForm(prev => ({ ...prev, promotion_auto_rotate: e.target.checked }))}
+              className="rounded"
+            />
+            <label htmlFor="promotion_auto_rotate" className="text-sm font-medium">Auto Rotate</label>
+          </div>
+          
+          <div>
+            <label htmlFor="rotation_speed" className="block text-sm font-medium mb-1">Rotation Speed (ms)</label>
+            <input
+              type="number"
+              id="rotation_speed"
+              value={settingsForm.promotion_rotation_speed}
+              onChange={(e) => setSettingsForm(prev => ({ ...prev, promotion_rotation_speed: parseInt(e.target.value) }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-retiro-red"
+              min="1000"
+              step="1000"
+            />
+          </div>
+          
+          <div>
+            <label htmlFor="max_display" className="block text-sm font-medium mb-1">Max Display Count</label>
+            <input
+              type="number"
+              id="max_display"
+              value={settingsForm.promotion_max_display}
+              onChange={(e) => setSettingsForm(prev => ({ ...prev, promotion_max_display: parseInt(e.target.value) }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-retiro-red"
+              min="1"
+              max="10"
+            />
+          </div>
+          
+          <div className="md:col-span-2">
+            <button
+              type="submit"
+              disabled={isProcessing}
+              className="bg-retiro-red text-white px-4 py-2 rounded-md hover:bg-retiro-kimchi transition-colors disabled:opacity-50"
+            >
+              {isProcessing ? 'Saving...' : 'Save Settings'}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Promotions List */}
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-semibold flex items-center">
+            <Megaphone className="w-5 h-5 mr-2" />
+            Promotions ({promotions.length})
+          </h3>
+          <button
+            onClick={() => setIsAdding(true)}
+            className="bg-retiro-red text-white px-4 py-2 rounded-md hover:bg-retiro-kimchi transition-colors flex items-center"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add Promotion
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-8">Loading promotions...</div>
+        ) : (
+          <div className="space-y-4">
+            {promotions.map((promotion) => (
+              <div key={promotion.id} className={`border rounded-lg p-4 ${promotion.active ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
+                <div className="flex justify-between items-start">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className="font-semibold text-lg">{promotion.title}</span>
+                      <span className="text-sm text-gray-600">({promotion.promo_code})</span>
+                      <span className={`px-2 py-1 rounded-full text-xs ${promotion.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                        {promotion.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    <p className="text-gray-700 mb-1">{promotion.subtitle}</p>
+                    <p className="text-sm text-gray-600 mb-2">{promotion.description}</p>
+                    <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <span>Valid: {promotion.valid_until}</span>
+                      <span>Order: {promotion.sort_order}</span>
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handleToggleStatus(promotion.id)}
+                      className={`px-3 py-1 rounded text-sm ${promotion.active ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' : 'bg-green-100 text-green-800 hover:bg-green-200'}`}
+                    >
+                      {promotion.active ? 'Disable' : 'Enable'}
+                    </button>
+                    <button
+                      onClick={() => handleEdit(promotion)}
+                      className="px-3 py-1 bg-blue-100 text-blue-800 rounded text-sm hover:bg-blue-200"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(promotion.id)}
+                      className="px-3 py-1 bg-red-100 text-red-800 rounded text-sm hover:bg-red-200"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Add/Edit Form */}
+      {isAdding && (
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-xl font-semibold mb-4">
+            {editingPromotion ? 'Edit Promotion' : 'Add New Promotion'}
+          </h3>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Title *</label>
+                <input
+                  type="text"
+                  value={promotionForm.title || ''}
+                  onChange={(e) => setPromotionForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-retiro-red"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Subtitle *</label>
+                <input
+                  type="text"
+                  value={promotionForm.subtitle || ''}
+                  onChange={(e) => setPromotionForm(prev => ({ ...prev, subtitle: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-retiro-red"
+                  required
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-1">Description *</label>
+                <textarea
+                  value={promotionForm.description || ''}
+                  onChange={(e) => setPromotionForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-retiro-red"
+                  rows={3}
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Image URL *</label>
+                <input
+                  type="url"
+                  value={promotionForm.image_url || ''}
+                  onChange={(e) => setPromotionForm(prev => ({ ...prev, image_url: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-retiro-red"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Gradient Colors</label>
+                <select
+                  value={promotionForm.gradient_colors || ''}
+                  onChange={(e) => setPromotionForm(prev => ({ ...prev, gradient_colors: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-retiro-red"
+                >
+                  <option value="from-retiro-red to-retiro-kimchi">Red to Kimchi</option>
+                  <option value="from-retiro-kimchi to-retiro-red">Kimchi to Red</option>
+                  <option value="from-retiro-red to-retiro-gold">Red to Gold</option>
+                  <option value="from-retiro-gold to-retiro-kimchi">Gold to Kimchi</option>
+                  <option value="from-retiro-kimchi to-retiro-gold">Kimchi to Gold</option>
+                  <option value="from-retiro-gold to-retiro-red">Gold to Red</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Badge Text *</label>
+                <input
+                  type="text"
+                  value={promotionForm.badge_text || ''}
+                  onChange={(e) => setPromotionForm(prev => ({ ...prev, badge_text: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-retiro-red"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Promo Code *</label>
+                <input
+                  type="text"
+                  value={promotionForm.promo_code || ''}
+                  onChange={(e) => setPromotionForm(prev => ({ ...prev, promo_code: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-retiro-red"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Valid Until *</label>
+                <input
+                  type="text"
+                  value={promotionForm.valid_until || ''}
+                  onChange={(e) => setPromotionForm(prev => ({ ...prev, valid_until: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-retiro-red"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Sort Order</label>
+                <input
+                  type="number"
+                  value={promotionForm.sort_order || 0}
+                  onChange={(e) => setPromotionForm(prev => ({ ...prev, sort_order: parseInt(e.target.value) }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-retiro-red"
+                  min="0"
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="active"
+                checked={promotionForm.active || false}
+                onChange={(e) => setPromotionForm(prev => ({ ...prev, active: e.target.checked }))}
+                className="rounded"
+              />
+              <label htmlFor="active" className="text-sm font-medium">Active</label>
+            </div>
+            
+            <div className="flex space-x-3">
+              <button
+                type="submit"
+                disabled={isProcessing}
+                className="bg-retiro-red text-white px-4 py-2 rounded-md hover:bg-retiro-kimchi transition-colors disabled:opacity-50"
+              >
+                {isProcessing ? 'Saving...' : (editingPromotion ? 'Update Promotion' : 'Add Promotion')}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAdding(false);
+                  setEditingPromotion(null);
+                  setPromotionForm({
+                    title: '',
+                    subtitle: '',
+                    description: '',
+                    image_url: '',
+                    gradient_colors: 'from-retiro-red to-retiro-kimchi',
+                    badge_text: '',
+                    promo_code: '',
+                    valid_until: '',
+                    active: true,
+                    sort_order: 0
+                  });
+                }}
+                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const AdminDashboard: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -17,7 +413,17 @@ const AdminDashboard: React.FC = () => {
   const [loginError, setLoginError] = useState('');
   const { menuItems, loading, addMenuItem, updateMenuItem, deleteMenuItem } = useMenu();
   const { categories } = useCategories();
-  const [currentView, setCurrentView] = useState<'dashboard' | 'items' | 'add' | 'edit' | 'categories' | 'payments' | 'settings'>('dashboard');
+  const { 
+    promotions, 
+    settings: promotionSettings, 
+    loading: promotionsLoading,
+    createPromotion,
+    updatePromotion,
+    deletePromotion,
+    togglePromotionStatus,
+    updatePromotionSettings
+  } = usePromotions();
+  const [currentView, setCurrentView] = useState<'dashboard' | 'items' | 'add' | 'edit' | 'categories' | 'payments' | 'settings' | 'promotions'>('dashboard');
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -893,6 +1299,38 @@ const AdminDashboard: React.FC = () => {
     return <CategoryManager onBack={() => setCurrentView('dashboard')} />;
   }
 
+  // Promotions View
+  if (currentView === 'promotions') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900">Promotion Management</h1>
+            <p className="text-gray-600 mt-2">Manage your promotional campaigns and carousel settings</p>
+          </div>
+          
+          <PromotionManager
+            promotions={promotions}
+            settings={promotionSettings}
+            loading={promotionsLoading}
+            onCreatePromotion={createPromotion}
+            onUpdatePromotion={updatePromotion}
+            onDeletePromotion={deletePromotion}
+            onToggleStatus={togglePromotionStatus}
+            onUpdateSettings={updatePromotionSettings}
+          />
+        </div>
+      </div>
+    );
+  }
+
   // Payment Methods View
   if (currentView === 'payments') {
     return <PaymentMethodManager onBack={() => setCurrentView('dashboard')} />;
@@ -1031,6 +1469,13 @@ const AdminDashboard: React.FC = () => {
               >
                 <FolderOpen className="h-5 w-5 text-gray-400" />
                 <span className="font-medium text-gray-900">Manage Categories</span>
+              </button>
+              <button
+                onClick={() => setCurrentView('promotions')}
+                className="w-full flex items-center space-x-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors duration-200"
+              >
+                <Megaphone className="h-5 w-5 text-gray-400" />
+                <span className="font-medium text-gray-900">Manage Promotions</span>
               </button>
               <button
                 onClick={() => setCurrentView('payments')}

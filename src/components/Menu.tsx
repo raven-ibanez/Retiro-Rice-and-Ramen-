@@ -8,6 +8,8 @@ import MobileNav from './MobileNav';
 // Promotion Carousel Component
 const PromotionCarousel: React.FC = () => {
   const [currentSlide, setCurrentSlide] = React.useState(0);
+  const [touchStart, setTouchStart] = React.useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = React.useState<number | null>(null);
   const { promotions, settings, loading } = usePromotions();
 
   // Auto-rotate carousel if enabled and has promotions
@@ -25,6 +27,32 @@ const PromotionCarousel: React.FC = () => {
   React.useEffect(() => {
     setCurrentSlide(0);
   }, [promotions.length]);
+
+  // Touch handlers for swipe navigation
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      nextSlide();
+    } else if (isRightSwipe) {
+      prevSlide();
+    }
+  };
 
   const goToSlide = (index: number) => {
     setCurrentSlide(index);
@@ -60,7 +88,12 @@ const PromotionCarousel: React.FC = () => {
   const currentPromotion = promotions[currentSlide];
 
   return (
-    <div className="relative h-80 sm:h-96 bg-gradient-to-r from-retiro-red to-retiro-kimchi">
+    <div 
+      className="relative h-80 sm:h-96 bg-gradient-to-r from-retiro-red to-retiro-kimchi"
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
       {/* Background Image */}
       <img 
         src={currentPromotion.image_url}
@@ -69,42 +102,26 @@ const PromotionCarousel: React.FC = () => {
       />
       <div className={`absolute inset-0 bg-gradient-to-r ${currentPromotion.gradient_colors}/80`}></div>
       
-      {/* Navigation Arrows - Hidden on mobile, shown on larger screens */}
+      {/* Navigation Arrows - Always visible */}
       <button
         onClick={prevSlide}
-        className="hidden sm:block absolute left-3 top-1/2 transform -translate-y-1/2 z-30 bg-black/30 backdrop-blur-sm rounded-full p-3 hover:bg-black/50 transition-all duration-300 border border-white/20"
+        className="absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 z-30 bg-black/30 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-black/50 transition-all duration-300 border border-white/20"
         aria-label="Previous promotion"
       >
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
       </button>
       
       <button
         onClick={nextSlide}
-        className="hidden sm:block absolute right-3 top-1/2 transform -translate-y-1/2 z-30 bg-black/30 backdrop-blur-sm rounded-full p-3 hover:bg-black/50 transition-all duration-300 border border-white/20"
+        className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 z-30 bg-black/30 backdrop-blur-sm rounded-full p-2 sm:p-3 hover:bg-black/50 transition-all duration-300 border border-white/20"
         aria-label="Next promotion"
       >
-        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
       </button>
-      
-      {/* Mobile Navigation Dots */}
-      <div className="sm:hidden absolute bottom-4 left-1/2 transform -translate-x-1/2 z-30 flex space-x-2">
-        {promotions.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentSlide(index)}
-            className={`w-2 h-2 rounded-full transition-all duration-300 ${
-              index === currentSlide 
-                ? 'bg-white scale-125' 
-                : 'bg-white/50'
-            }`}
-            aria-label={`Go to promotion ${index + 1}`}
-          />
-        ))}
-      </div>
       
       {/* Content */}
       <div className="relative z-10 flex items-center justify-center h-full px-4 sm:px-16">

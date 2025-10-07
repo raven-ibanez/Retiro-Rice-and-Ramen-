@@ -93,9 +93,10 @@ const ExclusiveOffers: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
   };
 
   // Don't render if disabled or no offers available
-  if (!settings.enabled || availableOffers.length === 0) {
-    return null;
-  }
+  // Temporarily commented out to debug
+  // if (!settings.enabled || availableOffers.length === 0) {
+  //   return null;
+  // }
 
   if (loading) {
     return (
@@ -104,6 +105,26 @@ const ExclusiveOffers: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-retiro-red mx-auto mb-4"></div>
             <p className="text-retiro-charcoal">Loading exclusive offers...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Debug info - show even if no offers
+  if (availableOffers.length === 0) {
+    return (
+      <div className="bg-gradient-to-br from-retiro-cream to-retiro-beige py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-retiro-dark mb-4">Exclusive Offers</h2>
+            <p className="text-retiro-charcoal mb-4">No exclusive offers available at the moment.</p>
+            <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+              <p className="text-sm">Debug Info:</p>
+              <p className="text-sm">• Total offers: {offers.length}</p>
+              <p className="text-sm">• Available offers: {availableOffers.length}</p>
+              <p className="text-sm">• Settings enabled: {settings.enabled ? 'Yes' : 'No'}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -332,9 +353,10 @@ const PromotionCarousel: React.FC = () => {
   };
 
   // Don't render if no promotions or disabled
-  if (!settings.promotions_enabled || promotions.length === 0) {
-    return null;
-  }
+  // Temporarily commented out to debug
+  // if (!settings.promotions_enabled || promotions.length === 0) {
+  //   return null;
+  // }
 
   // Show loading state
   if (loading) {
@@ -344,6 +366,25 @@ const PromotionCarousel: React.FC = () => {
           <div className="text-white text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
             <p className="text-lg">Loading promotions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Debug info - show even if no promotions
+  if (promotions.length === 0) {
+    return (
+      <div className="relative h-96 bg-gradient-to-r from-retiro-red to-retiro-kimchi rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-center h-full">
+          <div className="text-white text-center">
+            <h2 className="text-2xl font-bold mb-4">Promotions</h2>
+            <p className="text-lg mb-4">No promotions available at the moment.</p>
+            <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+              <p className="text-sm">Debug Info:</p>
+              <p className="text-sm">• Total promotions: {promotions.length}</p>
+              <p className="text-sm">• Settings enabled: {settings.promotions_enabled ? 'Yes' : 'No'}</p>
+            </div>
           </div>
         </div>
       </div>

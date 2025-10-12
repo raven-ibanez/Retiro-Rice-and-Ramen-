@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Minus, X, ShoppingCart, Check } from 'lucide-react';
 import { MenuItem, Variation, AddOn } from '../types';
+import ImageModal from './ImageModal';
+import QuantityModal from './QuantityModal';
 
 interface MenuItemCardProps {
   item: MenuItem;
@@ -22,6 +24,8 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
   const [selectedAddOns, setSelectedAddOns] = useState<(AddOn & { quantity: number })[]>([]);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [showQuantityModal, setShowQuantityModal] = useState(false);
 
   const calculatePrice = () => {
     // Use effective price (discounted or regular) as base
@@ -39,15 +43,20 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
     if (item.variations?.length || item.addOns?.length) {
       setShowCustomization(true);
     } else {
-      setIsAddingToCart(true);
-      // Simulate a brief loading state for better UX
-      await new Promise(resolve => setTimeout(resolve, 300));
-      onAddToCart(item, 1);
-      setIsAddingToCart(false);
-      setShowSuccessFeedback(true);
-      // Hide success feedback after 2 seconds
-      setTimeout(() => setShowSuccessFeedback(false), 2000);
+      setShowQuantityModal(true);
     }
+  };
+
+  const handleQuantityAddToCart = async (quantity: number) => {
+    setIsAddingToCart(true);
+    // Simulate a brief loading state for better UX
+    await new Promise(resolve => setTimeout(resolve, 300));
+    onAddToCart(item, quantity);
+    setIsAddingToCart(false);
+    setShowSuccessFeedback(true);
+    setShowQuantityModal(false);
+    // Hide success feedback after 2 seconds
+    setTimeout(() => setShowSuccessFeedback(false), 2000);
   };
 
   const handleCustomizedAddToCart = async () => {
@@ -116,9 +125,11 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
             <img
               src={item.image}
               alt={item.name}
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105 cursor-pointer hover:brightness-110"
               loading="lazy"
               decoding="async"
+              onClick={() => setShowImageModal(true)}
+              title="Click to enlarge image"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
                 e.currentTarget.nextElementSibling?.classList.remove('hidden');
@@ -425,6 +436,28 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
           </div>
         </div>
       )}
+
+      {/* Image Modal */}
+      <ImageModal
+        isOpen={showImageModal}
+        onClose={() => setShowImageModal(false)}
+        imageUrl={item.image || ''}
+        alt={item.name}
+        title={item.name}
+      />
+
+      {/* Quantity Modal */}
+      <QuantityModal
+        isOpen={showQuantityModal}
+        onClose={() => setShowQuantityModal(false)}
+        onAddToCart={handleQuantityAddToCart}
+        productName={item.name}
+        productPrice={item.effectivePrice || item.basePrice}
+        productImage={item.image}
+        isLoading={isAddingToCart}
+        showSuccess={showSuccessFeedback}
+        maxQuantity={20}
+      />
     </>
   );
 };

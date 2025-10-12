@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Save, X, ArrowLeft, Coffee, TrendingUp, Package, Users, Lock, FolderOpen, CreditCard, Settings, Megaphone, Crown } from 'lucide-react';
+import { Plus, Edit, Trash2, Save, X, ArrowLeft, Coffee, TrendingUp, Package, Users, Lock, FolderOpen, CreditCard, Settings, Megaphone, Crown, Key } from 'lucide-react';
 import { MenuItem, Variation, AddOn } from '../types';
 import { addOnCategories } from '../data/menuData';
 import { useMenu } from '../hooks/useMenu';
 import { useCategories, Category } from '../hooks/useCategories';
 import { usePromotions, Promotion } from '../hooks/usePromotions';
+import { supabase } from '../lib/supabase';
 import ImageUpload from './ImageUpload';
 import CategoryManager from './CategoryManager';
 import PaymentMethodManager from './PaymentMethodManager';
 import SiteSettingsManager from './SiteSettingsManager';
 import ExclusiveOffersManager from './ExclusiveOffersManager';
+import AdminPasswordManager from './AdminPasswordManager';
 
 // Promotion Manager Component
 const PromotionManager: React.FC<{
@@ -424,7 +426,7 @@ const AdminDashboard: React.FC = () => {
     togglePromotionStatus,
     updatePromotionSettings
   } = usePromotions();
-  const [currentView, setCurrentView] = useState<'dashboard' | 'items' | 'add' | 'edit' | 'categories' | 'payments' | 'settings' | 'promotions' | 'exclusive-offers'>('dashboard');
+  const [currentView, setCurrentView] = useState<'dashboard' | 'items' | 'add' | 'edit' | 'categories' | 'payments' | 'settings' | 'promotions' | 'exclusive-offers' | 'password'>('dashboard');
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -637,14 +639,37 @@ const AdminDashboard: React.FC = () => {
     count: menuItems.filter(item => item.category === cat.id).length
   }));
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'RetiroRiceandRamen@Admin!2025') {
-      setIsAuthenticated(true);
-      localStorage.setItem('retiro_admin_auth', 'true');
-      setLoginError('');
-    } else {
-      setLoginError('Invalid password');
+    try {
+      // Fetch admin password from database
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('value')
+        .eq('id', 'admin_password')
+        .single();
+
+      if (error) throw error;
+
+      const adminPassword = data?.value || 'RetiroRiceandRamen@Admin!2025'; // Fallback to default
+
+      if (password === adminPassword) {
+        setIsAuthenticated(true);
+        localStorage.setItem('retiro_admin_auth', 'true');
+        setLoginError('');
+      } else {
+        setLoginError('Invalid password');
+      }
+    } catch (err) {
+      console.error('Error verifying password:', err);
+      // Fallback to default password if database fails
+      if (password === 'RetiroRiceandRamen@Admin!2025') {
+        setIsAuthenticated(true);
+        localStorage.setItem('retiro_admin_auth', 'true');
+        setLoginError('');
+      } else {
+        setLoginError('Invalid password');
+      }
     }
   };
 
@@ -1360,6 +1385,29 @@ const AdminDashboard: React.FC = () => {
     return <PaymentMethodManager onBack={() => setCurrentView('dashboard')} />;
   }
 
+  // Password Management View
+  if (currentView === 'password') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <button
+              onClick={() => setCurrentView('dashboard')}
+              className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Dashboard
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900">Password Management</h1>
+            <p className="text-gray-600 mt-2">Change your admin dashboard password</p>
+          </div>
+          
+          <AdminPasswordManager />
+        </div>
+      </div>
+    );
+  }
+
   // Site Settings View
   if (currentView === 'settings') {
     return (
@@ -1521,6 +1569,13 @@ const AdminDashboard: React.FC = () => {
               >
                 <Settings className="h-5 w-5 text-gray-400" />
                 <span className="font-medium text-gray-900">Site Settings</span>
+              </button>
+              <button
+                onClick={() => setCurrentView('password')}
+                className="w-full flex items-center space-x-3 p-3 text-left hover:bg-gray-50 rounded-lg transition-colors duration-200"
+              >
+                <Key className="h-5 w-5 text-gray-400" />
+                <span className="font-medium text-gray-900">Change Password</span>
               </button>
             </div>
           </div>

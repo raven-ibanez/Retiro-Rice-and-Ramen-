@@ -6,6 +6,8 @@ import { useExclusiveOffers, ExclusiveOffer } from '../hooks/useExclusiveOffers'
 import { useCart } from '../hooks/useCart';
 import MenuItemCard from './MenuItemCard';
 import MobileNav from './MobileNav';
+import ImageModal from './ImageModal';
+import QuantityModal from './QuantityModal';
 import { Star, Crown, Zap } from 'lucide-react';
 
 // Exclusive Offers Component
@@ -15,6 +17,9 @@ const ExclusiveOffers: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
   const [touchEnd, setTouchEnd] = React.useState<number | null>(null);
   const [isAddingToCart, setIsAddingToCart] = React.useState(false);
   const [showSuccessFeedback, setShowSuccessFeedback] = React.useState(false);
+  const [showImageModal, setShowImageModal] = React.useState(false);
+  const [modalImage, setModalImage] = React.useState({ url: '', title: '', alt: '' });
+  const [showQuantityModal, setShowQuantityModal] = React.useState(false);
 
   const { offers, settings, loading } = useExclusiveOffers();
 
@@ -67,29 +72,43 @@ const ExclusiveOffers: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
   };
 
   const handleAddToCart = async (offer: ExclusiveOffer) => {
+    setShowQuantityModal(true);
+  };
+
+  const handleQuantityAddToCart = async (quantity: number) => {
     setIsAddingToCart(true);
     // Simulate a brief loading state for better UX
     await new Promise(resolve => setTimeout(resolve, 300));
     
     // Convert exclusive offer to cart item format
     const cartItem: CartItem = {
-      id: offer.id,
-      name: offer.title,
-      description: offer.description || '',
-      basePrice: offer.price,
+      id: availableOffers[currentSlide].id,
+      name: availableOffers[currentSlide].title,
+      description: availableOffers[currentSlide].description || '',
+      basePrice: availableOffers[currentSlide].price,
       category: 'Exclusive Offers',
-      image: offer.image_url,
+      image: availableOffers[currentSlide].image_url,
       popular: false,
-      available: offer.available,
-      quantity: 1,
-      totalPrice: offer.price
+      available: availableOffers[currentSlide].available,
+      quantity: quantity,
+      totalPrice: availableOffers[currentSlide].price * quantity
     };
 
     onAddToCart(cartItem);
     setIsAddingToCart(false);
     setShowSuccessFeedback(true);
+    setShowQuantityModal(false);
     // Hide success feedback after 2 seconds
     setTimeout(() => setShowSuccessFeedback(false), 2000);
+  };
+
+  const handleImageClick = (offer: ExclusiveOffer) => {
+    setModalImage({
+      url: offer.image_url || '',
+      title: offer.title,
+      alt: offer.title
+    });
+    setShowImageModal(true);
   };
 
   // Don't render if disabled or no offers available
@@ -150,7 +169,9 @@ const ExclusiveOffers: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
                 <img 
                   src={item.image_url || 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=600&h=400&fit=crop'}
                   alt={item.title}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:brightness-110 transition-all duration-300"
+                  onClick={() => handleImageClick(item)}
+                  title="Click to enlarge image"
                 />
                 <div className="absolute inset-0 bg-gradient-to-r from-retiro-dark/70 via-retiro-dark/40 to-transparent"></div>
                 
@@ -267,6 +288,30 @@ const ExclusiveOffers: React.FC<{ onAddToCart: (item: CartItem) => void }> = ({ 
         </div>
 
       </div>
+
+      {/* Image Modal */}
+      <ImageModal
+        isOpen={showImageModal}
+        onClose={() => setShowImageModal(false)}
+        imageUrl={modalImage.url}
+        alt={modalImage.alt}
+        title={modalImage.title}
+      />
+
+      {/* Quantity Modal */}
+      {availableOffers.length > 0 && (
+        <QuantityModal
+          isOpen={showQuantityModal}
+          onClose={() => setShowQuantityModal(false)}
+          onAddToCart={handleQuantityAddToCart}
+          productName={availableOffers[currentSlide]?.title || ''}
+          productPrice={availableOffers[currentSlide]?.price || 0}
+          productImage={availableOffers[currentSlide]?.image_url}
+          isLoading={isAddingToCart}
+          showSuccess={showSuccessFeedback}
+          maxQuantity={20}
+        />
+      )}
     </div>
   );
 };

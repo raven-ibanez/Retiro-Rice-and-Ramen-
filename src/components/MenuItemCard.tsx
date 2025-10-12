@@ -26,6 +26,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
   const [showSuccessFeedback, setShowSuccessFeedback] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showQuantityModal, setShowQuantityModal] = useState(false);
+  const [customizeQuantity, setCustomizeQuantity] = useState(1);
 
   const calculatePrice = () => {
     // Use effective price (discounted or regular) as base
@@ -37,6 +38,17 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
       price += addOn.price * addOn.quantity;
     });
     return price;
+  };
+
+  const calculateCustomizePrice = () => {
+    let price = item.effectivePrice || item.basePrice;
+    if (selectedVariation) {
+      price = (item.effectivePrice || item.basePrice) + selectedVariation.price;
+    }
+    selectedAddOns.forEach(addOn => {
+      price += addOn.price * addOn.quantity;
+    });
+    return price * customizeQuantity;
   };
 
   const handleAddToCart = async () => {
@@ -67,9 +79,10 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
     setIsAddingToCart(true);
     // Simulate a brief loading state for better UX
     await new Promise(resolve => setTimeout(resolve, 300));
-    onAddToCart(item, 1, selectedVariation, addOnsForCart);
+    onAddToCart(item, customizeQuantity, selectedVariation, addOnsForCart);
     setShowCustomization(false);
     setSelectedAddOns([]);
+    setCustomizeQuantity(1); // Reset quantity
     setIsAddingToCart(false);
     setShowSuccessFeedback(true);
     // Hide success feedback after 2 seconds
@@ -398,11 +411,52 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
                 </div>
               )}
 
+              {/* Quantity Selector */}
+              <div className="border-t border-gray-200 pt-6 mb-6">
+                <h4 className="font-semibold text-gray-900 mb-4">Quantity</h4>
+                <div className="flex items-center justify-center space-x-4">
+                  <button
+                    onClick={() => setCustomizeQuantity(Math.max(1, customizeQuantity - 1))}
+                    disabled={customizeQuantity <= 1 || isAddingToCart}
+                    className="w-10 h-10 rounded-full bg-retiro-red text-white flex items-center justify-center hover:bg-retiro-kimchi transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Minus className="w-5 h-5" />
+                  </button>
+                  
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl font-bold text-gray-900 min-w-[2rem] text-center">
+                      {customizeQuantity}
+                    </span>
+                    <span className="text-sm text-gray-500">items</span>
+                  </div>
+                  
+                  <button
+                    onClick={() => setCustomizeQuantity(Math.min(20, customizeQuantity + 1))}
+                    disabled={customizeQuantity >= 20 || isAddingToCart}
+                    className="w-10 h-10 rounded-full bg-retiro-red text-white flex items-center justify-center hover:bg-retiro-kimchi transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
               {/* Price Summary */}
               <div className="border-t border-gray-200 pt-4 mb-6">
-                <div className="flex items-center justify-between text-2xl font-bold text-gray-900">
-                  <span>Total:</span>
-                  <span className="text-red-600">₱{calculatePrice().toFixed(2)}</span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-lg text-gray-600">
+                    <span>Price per item:</span>
+                    <span>₱{calculatePrice().toFixed(2)}</span>
+                  </div>
+                  {customizeQuantity > 1 && (
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>× {customizeQuantity} items:</span>
+                      <span>₱{(calculatePrice() * customizeQuantity).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between text-2xl font-bold text-gray-900 pt-2 border-t">
+                    <span>Total:</span>
+                    <span className="text-red-600">₱{calculateCustomizePrice().toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
 
@@ -428,7 +482,7 @@ const MenuItemCard: React.FC<MenuItemCardProps> = ({
                 ) : (
                   <>
                     <ShoppingCart className="h-5 w-5" />
-                    <span>Add to Cart - ₱{calculatePrice().toFixed(2)}</span>
+                    <span>Add to Cart - ₱{calculateCustomizePrice().toFixed(2)}</span>
                   </>
                 )}
               </button>

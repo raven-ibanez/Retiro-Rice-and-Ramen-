@@ -60,7 +60,7 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) =>
       : '';
     
     const orderDetails = `
-🛒 ClickEats ORDER
+🛒 Retiro Rice & Ramen ORDER
 
 👤 Customer: ${customerName}
 📞 Contact: ${contactNumber}
